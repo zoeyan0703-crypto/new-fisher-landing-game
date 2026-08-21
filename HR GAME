@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创光计划 · 光之大陆探险 | 2026届海外委培</title>
+<style>
+:root {
+  --cosmic: #0a0e27; --star: #6366f1; --light: #60a5fa;
+  --green: #10b981; --amber: #f59e0b; --rose: #f43f5e;
+  --surface: rgba(15, 23, 42, 0.92);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #050816; color: #e2e8f0; overflow-x: hidden; min-height: 100vh;
+}
+/* ---- Starfield Canvas ---- */
+#starfield { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+
+/* ---- Main Container ---- */
+.game-container { position:relative; z-index:1; max-width:720px; margin:0 auto; padding:24px 16px 48px; min-height:100vh; display:flex; flex-direction:column; }
+
+/* ---- Screens ---- */
+.screen { display:none; flex-direction:column; align-items:center; flex:1; }
+.screen.active { display:flex; }
+
+/* ---- Intro Screen ---- */
+.intro { justify-content:center; text-align:center; padding:40px 0; }
+.intro-logo { width:100px; height:100px; border-radius:50%; background:radial-gradient(circle, #6366f1 0%, #0a0e27 70%); margin-bottom:24px; display:flex; align-items:center; justify-content:center; font-size:42px; box-shadow:0 0 60px rgba(99,102,241,0.4); }
+.intro h1 { font-size:36px; font-weight:800; background:linear-gradient(135deg,#818cf8,#38bdf8,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+.intro .sub { font-size:16px; color:#94a3b8; margin-bottom:32px; letter-spacing:2px; }
+.intro .lore { background:var(--surface); border:1px solid #1e293b; border-radius:16px; padding:20px 24px; margin-bottom:32px; font-size:14px; color:#94a3b8; text-align:left; line-height:1.8; }
+.intro .lore strong { color:#818cf8; }
+
+.name-input-group { margin-bottom:32px; width:100%; max-width:360px; }
+.name-input-group label { display:block; font-size:13px; color:#94a3b8; margin-bottom:8px; }
+.name-input-group input, .name-input-group select {
+  width:100%; padding:12px 16px; border-radius:10px; border:1px solid #334155;
+  background:#0f172a; color:#e2e8f0; font-size:16px; outline:none; transition:border .2s;
+}
+.name-input-group input:focus, .name-input-group select:focus { border-color:#6366f1; }
+
+.btn {
+  display:inline-flex; align-items:center; gap:8px; padding:14px 36px;
+  border-radius:50px; font-size:16px; font-weight:700; cursor:pointer;
+  border:none; transition:all .3s; text-decoration:none; position:relative; overflow:hidden;
+}
+.btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 4px 20px rgba(99,102,241,0.4); }
+.btn-primary:hover { box-shadow:0 6px 30px rgba(99,102,241,0.6); transform:translateY(-1px); }
+.btn-secondary { background:rgba(255,255,255,0.08); color:#e2e8f0; border:1px solid #334155; }
+.btn-secondary:hover { background:rgba(255,255,255,0.12); }
+
+/* ---- Progress Bar ---- */
+.progress-wrap { width:100%; margin-bottom:8px; }
+.progress-info { display:flex; justify-content:space-between; font-size:12px; color:#64748b; margin-bottom:6px; }
+.progress-bar { height:4px; background:#1e293b; border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#6366f1,#8b5cf6,#38bdf8); border-radius:2px; transition:width .5s ease; }
+
+/* ---- Level Scene ---- */
+.level-header { text-align:center; margin-bottom:24px; }
+.level-icon { font-size:48px; margin-bottom:8px; }
+.level-name { font-size:24px; font-weight:800; color:#e2e8f0; margin-bottom:4px; }
+.level-desc { font-size:13px; color:#64748b; }
+
+/* ---- Question Card ---- */
+.question-card {
+  background:var(--surface); border:1px solid #1e293b; border-radius:16px;
+  padding:28px 24px; margin-bottom:16px; width:100%;
+  animation: fadeCard .4s ease;
+}
+@keyframes fadeCard { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+.question-card .q-num { font-size:11px; color:#6366f1; text-transform:uppercase; letter-spacing:2px; margin-bottom:12px; }
+.question-card .q-text { font-size:16px; line-height:1.7; margin-bottom:20px; color:#f1f5f9; }
+
+/* Options */
+.option-list { display:flex; flex-direction:column; gap:10px; }
+.option {
+  display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+  border:1.5px solid #1e293b; border-radius:12px; cursor:pointer;
+  transition:all .2s; background:rgba(255,255,255,0.02);
+}
+.option:hover { border-color:#475569; background:rgba(255,255,255,0.04); }
+.option.selected { border-color:#6366f1; background:rgba(99,102,241,0.1); }
+.option .radio { flex-shrink:0; width:20px; height:20px; border-radius:50%; border:2px solid #475569; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.option.selected .radio { border-color:#6366f1; background:#6366f1; }
+.option.selected .radio::after { content:''; width:6px; height:6px; border-radius:50%; background:#fff; }
+.option .opt-text { font-size:14px; color:#cbd5e1; }
+.option.selected .opt-text { color:#e2e8f0; }
+
+/* Checkbox options */
+.option.multi .radio { border-radius:4px; }
+.option.multi.selected .radio { border-radius:4px; }
+.option.multi.selected .radio::after { content:'✓'; color:#fff; font-size:12px; background:transparent; width:auto; height:auto; }
+
+/* Textarea */
+.text-input { width:100%; padding:14px 16px; border-radius:12px; border:1.5px solid #1e293b; background:#0f172a; color:#e2e8f0; font-size:14px; resize:vertical; min-height:100px; outline:none; font-family:inherit; transition:border .2s; }
+.text-input:focus { border-color:#6366f1; }
+
+/* Slider */
+.slider-group { margin:8px 0; }
+.slider-label { display:flex; justify-content:space-between; font-size:13px; color:#94a3b8; margin-bottom:6px; }
+.slider-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.slider-row input[type=range] { flex:1; -webkit-appearance:none; height:6px; border-radius:3px; background:#1e293b; outline:none; }
+.slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#6366f1; cursor:pointer; box-shadow:0 0 12px rgba(99,102,241,0.5); }
+.slider-val { font-size:13px; color:#6366f1; font-weight:700; min-width:40px; text-align:right; }
+
+/* Navigation */
+.nav-row { display:flex; justify-content:space-between; align-items:center; width:100%; margin-top:8px; }
+.timer-indicator { display:flex; align-items:center; gap:6px; font-size:12px; color:#64748b; }
+.timer-dot { width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.chars-left { font-size:12px; color:#64748b; margin-top:4px; text-align:right; }
+
+/* ---- Results Screen ---- */
+.results { padding:20px 0; }
+.results-header { text-align:center; margin-bottom:32px; }
+.results-header .badge { display:inline-block; background:rgba(16,185,129,0.15); color:#34d399; padding:6px 18px; border-radius:20px; font-size:13px; margin-bottom:16px; }
+.results-header h2 { font-size:28px; font-weight:800; margin-bottom:4px; }
+.results-header .p-name { font-size:18px; color:#818cf8; margin-bottom:16px; }
+.results-header .stats-row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; }
+.stat-item { text-align:center; }
+.stat-item .val { font-size:28px; font-weight:800; background:linear-gradient(135deg,#818cf8,#38bdf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.stat-item .label { font-size:11px; color:#64748b; margin-top:2px; }
+
+.radar-box { width:100%; max-width:420px; margin:0 auto 24px; }
+.dim-legend { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px; }
+.dim-item { background:var(--surface); border:1px solid #1e293b; border-radius:10px; padding:12px 14px; }
+.dim-item .dim-name { font-size:13px; font-weight:600; color:#e2e8f0; margin-bottom:2px; }
+.dim-item .dim-bar-wrap { height:6px; background:#1e293b; border-radius:3px; margin-top:4px; overflow:hidden; }
+.dim-item .dim-bar { height:100%; border-radius:3px; transition:width 1s ease; }
+.dim-item .dim-score { font-size:12px; color:#94a3b8; margin-top:2px; }
+
+.insight-card { background:var(--surface); border:1px solid #1e293b; border-radius:16px; padding:20px 24px; margin-bottom:16px; width:100%; }
+.insight-card h4 { font-size:14px; color:#818cf8; margin-bottom:8px; }
+.insight-card p { font-size:13px; color:#94a3b8; line-height:1.7; }
+
+.export-hint { text-align:center; color:#475569; font-size:12px; margin-top:24px; padding:16px; border-top:1px solid #1e293b; }
+
+/* Animations */
+@keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+.spark { animation:twinkle 2s infinite; }
+
+/* Loading particles between levels */
+.level-transition {
+  position:fixed; top:0; left:0; width:100%; height:100%; z-index:10;
+  background:rgba(5,8,22,0.95); display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+}
+.level-transition.show { display:flex; }
+.level-transition .lt-icon { font-size:56px; }
+.level-transition .lt-text { font-size:18px; font-weight:700; color:#e2e8f0; }
+.level-transition .lt-sub { font-size:13px; color:#64748b; }
+
+/* Confirm dialog */
+.confirm-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:20; align-items:center; justify-content:center; }
+.confirm-overlay.show { display:flex; }
+.confirm-box { background:#0f172a; border:1px solid #1e293b; border-radius:16px; padding:32px; text-align:center; max-width:380px; }
+.confirm-box h3 { font-size:18px; margin-bottom:12px; }
+.confirm-box p { font-size:14px; color:#94a3b8; margin-bottom:24px; }
+.confirm-box .btn-row { display:flex; gap:12px; justify-content:center; }
+
+/* Pulse ring for selected */
+.pulse-ring { position:absolute; top:-4px; left:-4px; right:-4px; bottom:-4px; border-radius:50%; border:2px solid #6366f1; animation:pulse-ring 2s infinite; pointer-events:none; }
+@keyframes pulse-ring { 0%{transform:scale(1);opacity:0.8} 100%{transform:scale(1.4);opacity:0} }
+
+@media (max-width:600px) {
+  .game-container { padding:16px 12px 32px; }
+  .intro h1 { font-size:28px; }
+  .question-card { padding:20px 16px; }
+  .dim-legend { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<!-- Level Transition Overlay -->
+<div class="level-transition" id="levelTransition">
+  <div class="lt-icon" id="ltIcon"></div>
+  <div class="lt-text" id="ltText"></div>
+  <div class="lt-sub" id="ltSub"></div>
+</div>
+
+<!-- Exit Confirm -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>确定要退出吗？</h3>
+    <p>所有已完成的回答将会保存。</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="document.getElementById('confirmOverlay').classList.remove('show')">继续游戏</button>
+      <button class="btn btn-primary" onclick="showResults()">查看结果</button>
+    </div>
+  </div>
+</div>
+
+<div class="game-container" id="gameContainer">
+
+<!-- ==================== INTRO SCREEN ==================== -->
+<div class="screen active" id="screenIntro">
+  <div class="intro">
+    <div class="intro-logo">✦</div>
+    <h1>创 光 计 划</h1>
+    <div class="sub">光 之 大 陆 探 险</div>
+    <div class="lore">
+      <strong>背景：</strong>你是一名被选中的<strong>光之探索者</strong>。光之大陆有5个未知领域等待着被照亮——每盏灯的亮度，取决于你的选择、你的勇气、你的真实。<br><br>
+      这不是考试，没有标准答案。<br>
+      这是一次自我发现之旅。<br>
+      你只需<strong>做自己</strong>——剩下的事，交给光。
+    </div>
+    <div class="name-input-group">
+      <label>选择你的身份</label>
+      <select id="playerName" onchange="document.getElementById('customName').style.display=this.value==='custom'?'block':'none'">
+        <option value="">-- 请选择 --</option>
+        <option value="custom">其他（手动输入）</option>
+      </select>
+      <input type="text" id="customName" placeholder="输入你的名字" style="display:none;margin-top:8px;" maxlength="20">
+    </div>
+    <button class="btn btn-primary" onclick="startGame()">
+      <span>✦</span> 开始探险
+    </button>
+  </div>
+</div>
+
+<!-- ==================== LEVEL SCREEN ==================== -->
+<div class="screen" id="screenLevel">
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="levelLabel">第一关</span>
+      <span id="questionCounter">1/5</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="level-header">
+    <div class="level-icon" id="levelIcon"></div>
+    <div class="level-name" id="levelName"></div>
+    <div class="level-desc" id="levelDesc"></div>
+  </div>
+  <div id="questionArea"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="btnPrev" onclick="prevQuestion()" style="visibility:hidden;">◂ 上一题</button>
+    <div class="timer-indicator">
+      <span class="timer-dot"></span>
+      <span id="timerDisplay">00:00</span>
+    </div>
+    <button class="btn btn-secondary" id="btnNext" onclick="nextQuestion()" disabled>继续 ▸</button>
+  </div>
+</div>
+
+<!-- ==================== RESULTS SCREEN ==================== -->
+<div class="screen" id="screenResults">
+  <div class="results">
+    <div class="results-header">
+      <div class="badge">✦ 评估完成</div>
+      <h2>你的光谱报告</h2>
+      <div class="p-name" id="resultName"></div>
+      <div class="stats-row">
+        <div class="stat-item"><div class="val" id="statTime"></div><div class="label">总耗时</div></div>
+        <div class="stat-item"><div class="val" id="statLevel"></div><div class="label">完成关卡</div></div>
+        <div class="stat-item"><div class="val" id="statOverall"></div><div class="label">综合指数</div></div>
+      </div>
+    </div>
+    <div class="radar-box"><canvas id="radarCanvas" width="420" height="420"></canvas></div>
+    <div class="dim-legend" id="dimLegend"></div>
+    <div class="insight-card"><h4>🔍 AI洞察摘要</h4><p id="insightText"></p></div>
+    <div class="insight-card"><h4>⚠️ 关注提示</h4><p id="alertText"></p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:16px;">
+      <button class="btn btn-primary" onclick="restartGame()">重新开始</button>
+      <button class="btn btn-secondary" onclick="window.print()">打印报告</button>
+    </div>
+    <div class="export-hint">本测评基于"创光计划·轻量版方案A"设计 | 所有数据仅用于委培项目人才评估 | HRBP: yanyan07</div>
+  </div>
+</div>
+
+</div><!-- .game-container -->
+
+<script>
+// ==================== GAME STATE ====================
+const state = {
+  playerName: '',
+  currentLevel: 0,
+  currentQ: 0,
+  totalQ: 21,
+  answers: {},
+  timings: {},
+  startTimes: {},
+  gameStart: 0,
+  levelStart: 0,
+  qStart: 0,
+  timerInterval: null,
+  elapsed: 0,
+};
+
+// ==================== LEVEL DEFINITIONS ====================
+const levels = [
+  {
+    id: 1,
+    name: '初心灯塔',
+    icon: '🏰',
+    desc: '回忆入职以来的旅程，点亮你的灯塔',
+    color: '#6366f1',
+    dims: ['融入度', '归属感'],
+    questions: [
+      { id:'Q1', type:'radio', text:'入职这半年来，如果用一个天气来形容你的状态，最接近的是？', options:['持续晴天','多云转晴','时有阵雨','雾霾重重','暴风雨'], scoring:[5,4,3,2,1], dim:'融入度' },
+      { id:'Q2', type:'text', text:'入职第一天你收到了"新人百宝箱"。半年后回头看，哪个"工具"对你帮助最大？哪个你希望当时就有但现在还没有？', dim:'归属感' },
+      { id:'Q3', type:'radio', text:'你在团队中"第一个求助的人"是谁？如果TA离开了，你会找谁？', options:['直线上级','业务导师','HRBP','同期校招生','其他同事','自己解决'], scoring:[4,5,3,3,2,1], dim:'融入度' },
+      { id:'Q4', type:'radio', text:'【情景】周五下午6点，你手头的工作刚做完，导师走过来说"有空帮忙看个紧急数据吗"。你的第一反应？', options:['立刻答应并投入','答应但心里有点烦','询问是否可以周一处理','委婉拒绝'], scoring:[5,3,2,1], dim:'归属感' },
+    ]
+  },
+  {
+    id: 2,
+    name: '能量脉冲',
+    icon: '⚡',
+    desc: '管理你的能量网络，展现真实的精力状态',
+    color: '#10b981',
+    dims: ['健康度', '承压力'],
+    questions: [
+      { id:'Q5', type:'slider', text:'如果一天的精力总量是100%，你目前的分配大概是？', sliders:[{label:'工作',key:'work'},{label:'学习成长',key:'learn'},{label:'社交',key:'social'},{label:'休息恢复',key:'rest'},{label:'其他',key:'other'}], dim:'健康度' },
+      { id:'Q6', type:'radio', text:'【情景】你接手了一个没做过的分析任务，周五要给结果。周三发现数据源有问题，取数逻辑需要重来。你会？', options:['自己加班搞定','立刻找导师求助','先和leader同步风险再想办法','硬撑到周五看情况','其他'], scoring:[3,4,5,1,2], dim:'承压力' },
+      { id:'Q7', type:'multi', text:'最近一个月，以下哪种情绪你感受最多？（最多选3个）', options:['成就感','焦虑感','成长感','无聊感','归属感','迷茫感','疲惫感'], maxSelect:3, dim:'健康度' },
+      { id:'Q8', type:'radio', text:'如果你的"工作电池"需要充电，你最需要什么？', options:['一个完整周末','导师的一次深度反馈','一个能独立负责的小项目','和同期伙伴聊聊','其他'], scoring:[2,4,5,3,1], dim:'承压力' },
+    ]
+  },
+  {
+    id: 3,
+    name: '成长森林',
+    icon: '🌱',
+    desc: '培育你的能力之树，看清成长的方向',
+    color: '#38bdf8',
+    dims: ['成长力', '成长力'],
+    questions: [
+      { id:'Q9', type:'text', text:'回顾这半年，哪个瞬间让你觉得"我真的在成长"？（1-2句话）', dim:'成长力' },
+      { id:'Q10', type:'radio', text:'【情景】导师去海外出差2周，走前说"这段时间你自己看着办"。你会怎么安排？', options:['按之前安排继续','主动找还没接触过的模块学习','向其他同事寻求任务','放松一点等导师回来','整理之前的产出复盘'], scoring:[3,5,4,1,3], dim:'成长力' },
+      { id:'Q11', type:'radio', text:'如果给你一笔"技能点"可以点在任意风控技能上，你会优先点什么？', options:['策略分析','模型开发','数据工程','业务理解','外语/跨文化沟通','项目管理','其他'], scoring:[4,3,3,4,5,3,2], dim:'成长力' },
+      { id:'Q12', type:'text', text:'你觉得目前最需要的培养资源是什么？', dim:'成长力' },
+    ]
+  },
+  {
+    id: 4,
+    name: '星桥连结',
+    icon: '🤝',
+    desc: '搭建你的人际网络，展现真实的协作方式',
+    color: '#f59e0b',
+    dims: ['融入度', '归属感'],
+    questions: [
+      { id:'Q13', type:'text', text:'除了导师和Leader，请列出你在工作中最常互动的3个人（角色/花名即可）及互动频率。', dim:'融入度' },
+      { id:'Q14', type:'radio', text:'【情景】和模型组同事合作分析，对方给的输出和你的预期差很多。你会？', options:['直接指出问题','先理解对方逻辑再讨论','自己默默调整','找Leader介入','换个合作方'], scoring:[2,5,1,3,1], dim:'融入度' },
+      { id:'Q15', type:'radio', text:'你和同期其他校招生的交流频率如何？', options:['每天','每周几次','每月几次','很少','几乎不'], scoring:[5,4,3,2,1], dim:'归属感' },
+      { id:'Q16', type:'radio', text:'你觉得自己在团队中的角色更像？', options:['学习者','执行者','观察者','贡献者','被需要的人','可有可无的人'], scoring:[3,3,2,4,5,1], dim:'归属感' },
+    ]
+  },
+  {
+    id: 5,
+    name: '远征地平线',
+    icon: '🌏',
+    desc: '望向海外，这是你最真实的回答',
+    color: '#f43f5e',
+    dims: ['跨文化潜能', '跨文化潜能'],
+    questions: [
+      { id:'Q17', type:'radio', text:'如果现在告诉你，1年后要去海外工作，你的第一反应？', options:['很兴奋，一直在等','有点紧张但期待','不确定，看具体去哪','有些犹豫','不太想去'], scoring:[5,4,3,2,1], dim:'跨文化潜能' },
+      { id:'Q18', type:'radio', text:'【情景】去一个完全陌生的国家工作，出发前有3个月准备期。你会把最多时间花在？', options:['学语言','研究当地市场和业务','和在当地的同事交流','做好国内工作的交接','处理好个人生活安排'], scoring:[4,5,3,2,1], dim:'跨文化潜能' },
+      { id:'Q19', type:'radio', text:'以下哪个海外工作场景让你觉得最有挑战？', options:['语言不通影响工作沟通','文化差异导致工作方式冲突','远离家人朋友的孤独感','海外团队对中国风控体系的接受度','业务从0到1的不确定性','以上都不是问题'], scoring:[2,2,1,2,3,5], dim:'跨文化潜能' },
+      { id:'Q20', type:'text', text:'你对"2年国内+海外输送"这条路径的真实想法是？', dim:'跨文化潜能' },
+      { id:'Q21', type:'text', text:'如果给CEO提一个关于委培项目的建议，你会说什么？', dim:'跨文化潜能' },
+    ]
+  }
+];
+
+// ==================== STARFIELD ====================
+function initStarfield() {
+  const c = document.getElementById('starfield'), ctx = c.getContext('2d');
+  let stars = [];
+  function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  for (let i = 0; i < 200; i++) {
+    stars.push({ x:Math.random()*c.width, y:Math.random()*c.height, r:Math.random()*1.5+0.3, a:Math.random(), s:Math.random()*0.008+0.003 });
+  }
+  function draw() {
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s => {
+      s.a += s.s; if(s.a>1||s.a<0.2) s.s*=-1;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(148,163,184,${s.a})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ==================== TIMER ====================
+function startTimer() {
+  state.qStart = Date.now();
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.qStart)/1000);
+    document.getElementById('timerDisplay').textContent = `${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
+  }, 200);
+}
+
+function stopTimer(qid) {
+  clearInterval(state.timerInterval);
+  const elapsed = Math.floor((Date.now() - state.qStart)/1000);
+  // Only record timing on first attempt (when going back, preserve original)
+  if (!state.timings[qid]) state.timings[qid] = elapsed;
+  if (!state.startTimes[qid]) state.startTimes[qid] = new Date(state.qStart).toISOString();
+}
+
+// ==================== RENDER QUESTION ====================
+function renderQuestion() {
+  const level = levels[state.currentLevel];
+  const q = level.questions[state.currentQ];
+  const area = document.getElementById('questionArea');
+  area.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'question-card';
+
+  card.innerHTML = `
+    <div class="q-num">关卡${level.id} · 第${state.currentQ+1}题 / ${level.questions.length}题</div>
+    <div class="q-text">${q.text}</div>
+  `;
+
+  const content = document.createElement('div');
+
+  if (q.type === 'radio') {
+    const list = document.createElement('div'); list.className = 'option-list';
+    q.options.forEach((opt, i) => {
+      const div = document.createElement('div'); div.className = 'option';
+      div.innerHTML = `<span class="radio"></span><span class="opt-text">${opt}</span>`;
+      div.addEventListener('click', () => {
+        list.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        div.classList.add('selected');
+        state.answers[q.id] = { type:'radio', value:i, label:opt };
+        checkReady();
+      });
+      if (state.answers[q.id] && state.answers[q.id].value === i) div.classList.add('selected');
+      list.appendChild(div);
+    });
+    content.appendChild(list);
+  }
+
+  else if (q.type === 'multi') {
+    const list = document.createElement('div'); list.className = 'option-list';
+    const selected = state.answers[q.id] ? state.answers[q.id].value : [];
+    q.options.forEach((opt, i) => {
+      const div = document.createElement('div'); div.className = 'option multi';
+      div.innerHTML = `<span class="radio"></span><span class="opt-text">${opt}</span>`;
+      if (selected.includes(i)) div.classList.add('selected');
+      div.addEventListener('click', () => {
+        if (div.classList.contains('selected')) {
+          div.classList.remove('selected');
+          const idx = selected.indexOf(i); if(idx>=0) selected.splice(idx,1);
+        } else {
+          if (selected.length >= q.maxSelect) {
+            const first = selected.shift();
+            list.children[first].classList.remove('selected');
+          }
+          div.classList.add('selected'); selected.push(i);
+        }
+        state.answers[q.id] = { type:'multi', value:[...selected], label:q.options.filter((_,j)=>selected.includes(j)).join('、') };
+        checkReady();
+      });
+      list.appendChild(div);
+    });
+    content.appendChild(list);
+  }
+
+  else if (q.type === 'slider') {
+    const group = document.createElement('div'); group.className = 'slider-group';
+    const vals = state.answers[q.id] ? state.answers[q.id].value : {};
+    q.sliders.forEach(s => {
+      const row = document.createElement('div'); row.className = 'slider-row';
+      const val = vals[s.key] !== undefined ? vals[s.key] : 20;
+      row.innerHTML = `<span style="font-size:13px;color:#94a3b8;min-width:70px;">${s.label}</span>
+        <input type="range" min="0" max="100" value="${val}" data-key="${s.key}">
+        <span class="slider-val">${val}%</span>`;
+      const input = row.querySelector('input');
+      const display = row.querySelector('.slider-val');
+      input.addEventListener('input', () => { display.textContent = input.value + '%'; updateSliders(); });
+      group.appendChild(row);
+    });
+    content.appendChild(group);
+    const updateSliders = () => {
+      const obj = {};
+      group.querySelectorAll('input').forEach(inp => obj[inp.dataset.key] = parseInt(inp.value));
+      state.answers[q.id] = { type:'slider', value:obj, label:Object.entries(obj).map(([k,v])=>`${k}:${v}%`).join(', ') };
+      checkReady();
+    };
+  }
+
+  else if (q.type === 'text') {
+    const ta = document.createElement('textarea');
+    ta.className = 'text-input'; ta.placeholder = '请输入你的真实想法...';
+    ta.value = state.answers[q.id] ? state.answers[q.id].value : '';
+    const chars = document.createElement('div'); chars.className = 'chars-left'; chars.textContent = '0 / 500 字';
+    ta.addEventListener('input', () => {
+      chars.textContent = ta.value.length + ' / 500 字';
+      state.answers[q.id] = { type:'text', value:ta.value, label:ta.value.substring(0,50) + (ta.value.length>50?'...':'') };
+      checkReady();
+    });
+    content.appendChild(ta);
+    content.appendChild(chars);
+  }
+
+  card.appendChild(content);
+  area.appendChild(card);
+
+  // Update nav
+  document.getElementById('questionCounter').textContent = `Q${(state.currentQ + 1 + levels.slice(0,state.currentLevel).reduce((s,l)=>s+l.questions.length,0))}/${state.totalQ}`;
+  document.getElementById('levelLabel').textContent = `第${level.id}关 · ${level.name}`;
+  document.getElementById('levelIcon').textContent = level.icon;
+  document.getElementById('levelName').textContent = level.name;
+  document.getElementById('levelDesc').textContent = level.desc;
+  const totalProgress = ((state.currentQ + 1 + levels.slice(0,state.currentLevel).reduce((s,l)=>s+l.questions.length,0)) / state.totalQ) * 100;
+  document.getElementById('progressFill').style.width = totalProgress + '%';
+  document.getElementById('btnNext').disabled = !state.answers[q.id];
+  // Show/hide prev button
+  const isFirstQ = (state.currentLevel === 0 && state.currentQ === 0);
+  document.getElementById('btnPrev').style.visibility = isFirstQ ? 'hidden' : 'visible';
+
+  // For slider questions, add total validation
+  if (q.type === 'slider') {
+    const totalDisplay = document.createElement('div');
+    totalDisplay.id = 'sliderTotal';
+    totalDisplay.style.cssText = 'text-align:center;margin-top:10px;font-size:14px;font-weight:700;color:#38bdf8;';
+    area.querySelector('.question-card').appendChild(totalDisplay);
+    const updateSliderTotal = () => {
+      const ans = state.answers[q.id];
+      const total = ans ? Object.values(ans.value).reduce((a,b)=>a+b,0) : 0;
+      totalDisplay.textContent = `当前总计：${total}%` + (total === 100 ? ' ✅' : `（${total>100?'超出':'还差'}${Math.abs(100-total)}%）`);
+      totalDisplay.style.color = total === 100 ? '#34d399' : total > 100 ? '#f43f5e' : '#f59e0b';
+      // Validate: slider requires total === 100
+      if (ans && total !== 100) {
+        document.getElementById('btnNext').disabled = true;
+        if (!document.getElementById('sliderWarning')) {
+          const warn = document.createElement('div');
+          warn.id = 'sliderWarning';
+          warn.style.cssText = 'text-align:center;font-size:12px;color:#f43f5e;margin-top:4px;';
+          warn.textContent = '⚠ 五项合计必须为100%才能继续';
+          area.querySelector('.question-card').appendChild(warn);
+        }
+      } else if (ans && total === 100) {
+        document.getElementById('btnNext').disabled = false;
+        const warn = document.getElementById('sliderWarning');
+        if (warn) warn.remove();
+      }
+    };
+    // Hook into existing slider inputs
+    area.querySelectorAll('input[type=range]').forEach(inp => {
+      inp.addEventListener('input', updateSliderTotal);
+    });
+    updateSliderTotal();
+  }
+
+  // Scroll into view
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+  startTimer();
+}
+
+function checkReady() {
+  const level = levels[state.currentLevel];
+  const q = level.questions[state.currentQ];
+  if (!state.answers[q.id]) return;
+  // For slider questions, also validate total === 100
+  if (q.type === 'slider') {
+    const total = Object.values(state.answers[q.id].value).reduce((a,b)=>a+b,0);
+    if (total !== 100) return;
+  }
+  document.getElementById('btnNext').disabled = false;
+}
+
+// ==================== NAVIGATION ====================
+function nextQuestion() {
+  const level = levels[state.currentLevel];
+  const q = level.questions[state.currentQ];
+  stopTimer(q.id);
+
+  state.currentQ++;
+  if (state.currentQ >= level.questions.length) {
+    if (state.currentLevel < levels.length - 1) {
+      showTransition(() => {
+        state.currentLevel++;
+        state.currentQ = 0;
+        state.levelStart = Date.now();
+        renderQuestion();
+      });
+    } else {
+      showResults();
+    }
+  } else {
+    renderQuestion();
+  }
+}
+
+function prevQuestion() {
+  const level = levels[state.currentLevel];
+  const q = level.questions[state.currentQ];
+  stopTimer(q.id);
+
+  state.currentQ--;
+  if (state.currentQ < 0) {
+    // Go back to previous level's last question
+    state.currentLevel--;
+    state.currentQ = levels[state.currentLevel].questions.length - 1;
+  }
+  renderQuestion();
+}
+
+function showTransition(cb) {
+  const nextLevel = levels[state.currentLevel + 1];
+  const overlay = document.getElementById('levelTransition');
+  document.getElementById('ltIcon').textContent = nextLevel.icon;
+  document.getElementById('ltText').textContent = `即将进入：${nextLevel.name}`;
+  document.getElementById('ltSub').textContent = nextLevel.desc;
+  overlay.classList.add('show');
+  setTimeout(() => { overlay.classList.remove('show'); cb(); }, 1800);
+}
+
+// ==================== START / RESTART ====================
+function startGame() {
+  const sel = document.getElementById('playerName').value;
+  const custom = document.getElementById('customName').value.trim();
+  if (!sel) { alert('请选择或输入你的名字'); return; }
+  state.playerName = sel === 'custom' ? (custom || '匿名探索者') : sel;
+  state.currentLevel = 0; state.currentQ = 0;
+  state.answers = {}; state.timings = {}; state.startTimes = {};
+  state.gameStart = Date.now(); state.levelStart = Date.now();
+
+  document.getElementById('screenIntro').classList.remove('active');
+  document.getElementById('screenLevel').classList.add('active');
+  document.getElementById('screenResults').classList.remove('active');
+  renderQuestion();
+}
+
+function restartGame() {
+  state.answers = {}; state.timings = {}; state.startTimes = {};
+  state.currentLevel = 0; state.currentQ = 0;
+  state.gameStart = Date.now(); state.levelStart = Date.now();
+  document.getElementById('screenResults').classList.remove('active');
+  document.getElementById('screenLevel').classList.add('active');
+  renderQuestion();
+}
+
+// ==================== SCORING ENGINE ====================
+function computeScores() {
+  const dims = ['融入度','归属感','健康度','承压力','成长力','跨文化潜能'];
+  const scores = {}; dims.forEach(d => { scores[d] = { raw:0, count:0 }; });
+
+  levels.forEach(level => {
+    level.questions.forEach(q => {
+      const ans = state.answers[q.id];
+      if (!ans) return;
+      const dim = q.dim;
+      if (q.type === 'radio' && q.scoring && ans.value !== undefined) {
+        scores[dim].raw += q.scoring[ans.value];
+        scores[dim].count++;
+      }
+      if (q.type === 'radio' && !q.scoring && ans.value !== undefined) {
+        // generic: option 0 = best
+        const max = q.options.length - 1;
+        scores[dim].raw += (max - ans.value) + 1;
+        scores[dim].count++;
+      }
+      if (q.type === 'multi') {
+        // More emotions selected = potentially lower score if negative emotions
+        const negEmotions = ['焦虑感','无聊感','迷茫感','疲惫感'];
+        const posEmotions = ['成就感','成长感','归属感'];
+        const val = ans.value || [];
+        let positives = 0, negatives = 0;
+        val.forEach(i => {
+          if (posEmotions.includes(q.options[i])) positives++;
+          if (negEmotions.includes(q.options[i])) negatives++;
+        });
+        const score = Math.max(1, Math.min(5, 3 + positives - negatives));
+        scores[dim].raw += score;
+        scores[dim].count++;
+      }
+      if (q.type === 'slider') {
+        // Work-life balance: work>60% = lower health score
+        const val = ans.value || {};
+        const workRatio = (val.work||0) / 100;
+        const restRatio = (val.rest||0) / 100;
+        const score = Math.max(1, Math.min(5, Math.round(3 + (restRatio*4) - (workRatio>0.5 ? 2 : 0))));
+        scores[dim].raw += score;
+        scores[dim].count++;
+      }
+      if (q.type === 'text') {
+        // Text length as engagement proxy, plus check for key positive words
+        const txt = (ans.value||'').toLowerCase();
+        const len = txt.length;
+        let score = 2;
+        if (len > 20) score = 3;
+        if (len > 60) score = 4;
+        if (len > 120) score = 5;
+        const posWords = ['成长','学到了','进步','挑战','期待','愿意','希望','开心','充实','感谢','帮助','团队','导师','好','good'];
+        const negWords = ['累','压力','迷茫','焦虑','不想','不确定','犹豫','担心','难','烦'];
+        let p=0,n=0; posWords.forEach(w=>{if(txt.includes(w))p++}); negWords.forEach(w=>{if(txt.includes(w))n++});
+        if (p>n) score = Math.min(5, score+1);
+        if (n>p) score = Math.max(1, score-1);
+        scores[dim].raw += score;
+        scores[dim].count++;
+      }
+    });
+  });
+
+  const normalized = {};
+  dims.forEach(d => {
+    normalized[d] = scores[d].count > 0 ? Math.round((scores[d].raw / scores[d].count) * 20) : 50;
+    // Clamp 0-100
+    normalized[d] = Math.max(10, Math.min(100, normalized[d]));
+  });
+  return normalized;
+}
+
+// ==================== SHOW RESULTS ====================
+function showResults() {
+  clearInterval(state.timerInterval);
+
+  document.getElementById('screenLevel').classList.remove('active');
+  document.getElementById('screenIntro').classList.remove('active');
+  document.getElementById('screenResults').classList.add('active');
+  document.getElementById('resultName').textContent = `探索者：${state.playerName}`;
+
+  const totalElapsed = Math.floor((Date.now() - state.gameStart) / 1000);
+  const min = Math.floor(totalElapsed/60), sec = totalElapsed%60;
+  document.getElementById('statTime').textContent = `${min}分${sec}秒`;
+  document.getElementById('statLevel').textContent = `${levels.length}关`;
+
+  const scores = computeScores();
+  const overall = Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/6);
+  document.getElementById('statOverall').textContent = overall + '%';
+
+  // Radar chart
+  drawRadar(scores);
+  // Dimension legend
+  renderDimLegend(scores);
+  // Insights
+  generateInsights(scores);
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function drawRadar(scores) {
+  const canvas = document.getElementById('radarCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, r = 150;
+  const dims = ['融入度','归属感','健康度','承压力','成长力','跨文化潜能'];
+  const labels = ['融入度','归属感','健康度','承压力','成长力','跨文化'];
+  const n = dims.length;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  for (let g = 1; g <= 5; g++) {
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+      const rr = (r / 5) * g;
+      const x = cx + rr * Math.cos(angle), y = cy + rr * Math.sin(angle);
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = g===5 ? '#334155' : '#1e293b';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+r*Math.cos(angle),cy+r*Math.sin(angle));
+    ctx.strokeStyle = '#1e293b'; ctx.stroke();
+    // Labels
+    const lx = cx + (r+30) * Math.cos(angle), ly = cy + (r+30) * Math.sin(angle);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(labels[i], lx, ly);
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+    const val = scores[dims[i]] / 100;
+    const rr = val * r;
+    const x = cx + rr * Math.cos(angle), y = cy + rr * Math.sin(angle);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(99,102,241,0.2)';
+  ctx.fill();
+  ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Points
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+    const val = scores[dims[i]] / 100;
+    const rr = val * r;
+    const x = cx + rr * Math.cos(angle), y = cy + rr * Math.sin(angle);
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle = '#818cf8'; ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.fillText(scores[dims[i]], x, y-14);
+  }
+}
+
+function renderDimLegend(scores) {
+  const dims = ['融入度','归属感','健康度','承压力','成长力','跨文化潜能'];
+  const colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#38bdf8','#f43f5e'];
+  const descs = {
+    '融入度':'团队融入速度、人际关系网络',
+    '归属感':'组织认同、长期留存意愿',
+    '健康度':'精力状态、情绪稳定性',
+    '承压力':'压力应对策略、恢复速度',
+    '成长力':'学习曲线、主动探索行为',
+    '跨文化潜能':'海外意愿、文化敏感度',
+  };
+  const html = dims.map((d,i) => `
+    <div class="dim-item">
+      <div class="dim-name" style="color:${colors[i]}">${d}</div><div>${descs[d]}</div>
+      <div class="dim-bar-wrap"><div class="dim-bar" style="width:${scores[d]}%;background:${colors[i]}"></div></div>
+      <div class="dim-score">${scores[d]}%</div>
+    </div>
+  `).join('');
+  document.getElementById('dimLegend').innerHTML = html;
+}
+
+function generateInsights(scores) {
+  const maxDim = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+  const minDim = Object.entries(scores).sort((a,b)=>a[1]-b[1])[0];
+  const overall = Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/6);
+
+  const insights = {
+    high: {
+      '融入度':'你在团队中建立了良好的关系网络，能够快速找到可依赖的资源。这是国际化人才的重要基础。',
+      '归属感':'你对组织和委培路径有较强的认同感，这是长期留存的积极信号。',
+      '健康度':'你目前的精力状态和情绪稳定性良好，具备持续高投入的基础。',
+      '承压力':'你展现出了超出同龄人的压力应对能力，面对不确定性时能保持冷静和主动。',
+      '成长力':'你有强烈的成长动力和主动学习意愿，是"自我驱动型"高潜人才的典型特征。',
+      '跨文化潜能':'你对海外工作展现出真实的兴趣和准备度，是最接近"国际化就绪"状态的校招生。',
+    },
+    low: {
+      '融入度':'你的人际网络可能偏窄，建议增加跨团队协作机会和社交接触点。',
+      '归属感':'你可能对当前环境或未来发展存在不确定感，建议安排一次深度1v1面谈。',
+      '健康度':'你的精力或情绪状态需要关注，建议评估工作负荷和压力来源。',
+      '承压力':'在面对突发压力时，你可能倾向于独自承担而非主动求助，这可能是风险信号。',
+      '成长力':'你当前的学习动力和探索意愿可能处于平台期，建议通过轮岗或新项目刺激成长。',
+      '跨文化潜能':'你对海外工作的真实意愿或准备度可能需要进一步确认和引导。',
+    }
+  };
+
+  let insight = `综合指数 ${overall}%，最突出维度：<strong>${maxDim[0]}</strong>（${maxDim[1]}%）。` +
+    `<br>${insights.high[maxDim[0]] || ''}`;
+  let alert = '';
+  if (minDim[1] < 40) {
+    alert = `⚠️ <strong>${minDim[0]}</strong>维度得分较低（${minDim[1]}%），${insights.low[minDim[0]] || ''}`;
+  } else if (minDim[1] < 55) {
+    alert = `🟡 <strong>${minDim[0]}</strong>维度值得关注（${minDim[1]}%），${insights.low[minDim[0]] || ''}`;
+  } else {
+    alert = '✅ 各维度表现均衡，无明显低分预警信号。继续按培养计划推进。';
+  }
+
+  document.getElementById('insightText').innerHTML = insight;
+  document.getElementById('alertText').innerHTML = alert;
+}
+
+// ==================== INIT ====================
+initStarfield();
+
+// Auto-save on page leave
+window.addEventListener('beforeunload', (e) => {
+  if (Object.keys(state.answers).length > 0 && !document.getElementById('screenResults').classList.contains('active')) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+
+// Keyboard shortcut: Enter to advance
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.getElementById('screenLevel').classList.contains('active')) {
+    const btn = document.getElementById('btnNext');
+    if (!btn.disabled) nextQuestion();
+  }
+});
+</script>
+
+</body>
+</html>
