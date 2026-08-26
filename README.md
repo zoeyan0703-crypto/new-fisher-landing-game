@@ -69,11 +69,6 @@ python3 -m http.server 8000
 
 或直接双击 `index.html`。
 
-## 🖼 效果预览
-
-> 📌 **截图待补充**：把工作台 / 人才分层矩阵 / 管理简报截图放这里，引流效果更佳（建议放一张 16:9 桌面图 + 一张关键页面特写）。  
-> 可在 [assets](https://github.com/ZoeYan-AIHR/talent-development-management-system/assets) 目录上传。
-
 ## 🗺 路线图（Roadmap）
 
 - [ ] 多维人才画像与九宫格 / 人才地图视图
