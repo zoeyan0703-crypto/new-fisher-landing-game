@@ -12,7 +12,7 @@
 
 启用 GitHub Pages 后，可通过以下地址访问：
 
-https://zoeyan0703-crypto.github.io/new-fisher-landing-game/cadre-pro-talent-development/
+https://zoeyan-aihr.github.io/talent-development-management-system/cadre-pro-talent-development/
 
 ## 主要页面与功能
 
