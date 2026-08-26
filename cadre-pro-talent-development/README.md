@@ -43,4 +43,4 @@ https://zoeyan-aihr.github.io/talent-development-management-system/cadre-pro-tal
 
 ## 版权所有
 
-© 2026 zoeyan0703-crypto. All Rights Reserved.
+© 2026 zoeyan-aihr. All Rights Reserved.
